@@ -1,0 +1,135 @@
+import pandas as pd
+from scipy.stats import spearmanr
+import io
+
+# Dados da amostra 
+data_str_fixed = """id selecao,id populacao,whatsapp,selecionado,nome,acesso mensal,porcentagem (%) infomações compreensíveis,porcentagem (%) de confiança,alterou sua senha de acesso ao SIAC nos últimos 12 meses
+1,12,557197170114,sim,Nathalia Ribeiro,8,95,80,0
+2,13,557188340381,sim,Lucas Mota,12,90,10,0
+3,40,557391463065,sim,Fabiane Dias da Silva,2,80,70,1
+4,70,557193454743,sim,Marcio Ribeiro Junior,15,40,30,2
+5,111,557192146174,sim,Evelyn Santana,7,80,90,0
+6,124,557599225798,sim,Jorge Ferreira,5,75,80,1
+7,137,557183606362,sim,Mayara Santos,2,65,35,1
+8,165,557181471820,sim,Flávia Araújo,4,60,80,0
+9,173,5571981949275,sim,Vitória Pereira,2,80,10,2
+10,175,557199157762,sim,Pedro Antônio Rocha Magalhães da Cruz,3,60,30,0
+11,189,557185104572,sim,Landerson Miranda,8,90,60,0
+12,229,557188734439,sim,Lucas Longo,10,70,50,2
+13,260,557499456078,sim,Bruno Emanoel Loiola Xavier,4,70,20,1
+14,265,557581532806,sim,C. Silva,10,100,50,0
+15,283,557182735598,sim,Elis Oliveira Vasconcelos,3,90,100,0
+16,332,557199391996,sim,Igor Lima,2,60,20,0
+17,361,557196624538,sim,Daniel Neves,5,40,15,0
+18,399,5571999257871,sim,Cauã Lima,5,30,50,0
+19,403,557592479485,sim,Júlia Brito Mattos,10,90,80,0
+20,457,557582818595,sim,Tarcisio Brito,10,80,90,0
+21,493,557191570569,sim,Ariel Oliveira Santos,5,70,50,0
+22,496,557187670057,sim,Ryan Reis,2,70,50,0
+23,510,557193533243,sim,Marcos,4,60,5,5
+24,537,557193824099,sim,Felipe Cabral,5,70,75,2
+25,555,557187792096,sim,Larissa Soares,6,80,10,0
+26,615,557191237166,sim,Reis,3,40,40,0
+27,618,557592108575,sim,Felipe da Silva,10,10,10,0 # Correção manual do erro ","
+28,627,557188101398,sim,Hugo Santana,4,80,20,0
+29,632,557187881956,sim,João Gabriel Lofiego,10,100,85,0
+30,684,557598955048,sim,Lucas Santana,15,90,100,1
+31,734,557491315006,sim,Eduardo Vasconcelos,4,70,50,0
+32,743,557188614807,sim,Ferreira,15,40,40,4
+"""
+
+# Read the data into a pandas DataFrame from the string
+df_amostra_teste = pd.read_csv(io.StringIO(data_str_fixed))
+
+# Identify the 'id selecao' column as the positional variable
+positional_variable_name = 'id selecao'
+# No need for complex fallback if the data_str_fixed is always used as it is now correctly formatted.
+# Just ensure it exists
+if positional_variable_name not in df_amostra_teste.columns:
+    raise ValueError(f"Positional variable '{positional_variable_name}' not found in the dataset.")
+
+
+# Standardize column names for the analysis variables based on the instrument description and actual CSV
+new_column_names_mapping = {
+    'acesso mensal': 'Frequencia_Uso',
+    'porcentagem (%) infomações compreensíveis': 'Clareza_Informacoes',
+    'porcentagem (%) de confiança': 'Confianca_Dados',
+    'alterou sua senha de acesso ao SIAC nos últimos 12 meses': 'Mudanca_Senha'
+}
+
+# Rename columns
+df_amostra_teste_renamed = df_amostra_teste.rename(columns=new_column_names_mapping)
+
+# Select only the relevant columns for analysis
+variables_for_correlation = [
+    'Frequencia_Uso',
+    'Clareza_Informacoes',
+    'Confianca_Dados',
+    'Mudanca_Senha'
+]
+
+# Ensure all selected columns are in the DataFrame after renaming
+final_columns_to_use = [positional_variable_name] + [col for col in variables_for_correlation if col in df_amostra_teste_renamed.columns]
+df_correlation = df_amostra_teste_renamed[final_columns_to_use].copy()
+
+# Convert columns to numeric, coercing errors
+for col in df_correlation.columns:
+    df_correlation[col] = pd.to_numeric(df_correlation[col], errors='coerce')
+
+# Drop rows with NaN values (resulting from coercion)
+df_correlation.dropna(inplace=True)
+
+# Perform Spearman correlation
+correlation_results = {}
+for var in variables_for_correlation:
+    if var in df_correlation.columns: # Ensure variable exists after dropping NaNs
+        corr, p_value = spearmanr(df_correlation[positional_variable_name], df_correlation[var])
+        correlation_results[var] = {'Correlação de Spearman': corr, 'Valor-P': p_value}
+    else:
+        correlation_results[var] = {'Correlação de Spearman': 'N/A', 'Valor-P': 'N/A - Variável não encontrada/numérica'}
+
+# Prepare for output
+corr_df = pd.DataFrame(correlation_results).transpose()
+
+print("```python") # Start of code block
+print("import pandas as pd")
+print("from scipy.stats import spearmanr")
+print("import io")
+print("")
+print("# Dados da amostra fornecidos pelo usuário")
+print("data_str = \"\"\"" + data_str_fixed + "\"\"\"")
+print("")
+print("df = pd.read_csv(io.StringIO(data_str))")
+print("")
+print("# Renomear colunas para facilitar a análise")
+print("df_renamed = df.rename(columns={")
+for k, v in new_column_names_mapping.items():
+    print(f"    '{k}': '{v}',")
+print("})")
+print("")
+print("# Definir variável posicional e variáveis de interesse")
+print(f"positional_var = '{positional_variable_name}'")
+print("analysis_vars = [")
+for var in variables_for_correlation:
+    print(f"    '{var}',")
+print("]")
+print("")
+print("# Selecionar e converter colunas para numérico")
+print("df_analysis = df_renamed[[positional_var] + analysis_vars].copy()")
+print("for col in df_analysis.columns:")
+print("    df_analysis[col] = pd.to_numeric(df_analysis[col], errors='coerce')")
+print("df_analysis.dropna(inplace=True)")
+print("")
+print("# Calcular Correlação de Spearman")
+print("correlation_results = {}")
+print("for var in analysis_vars:")
+print("    if var in df_analysis.columns:")
+print("        corr, p_value = spearmanr(df_analysis[positional_var], df_analysis[var])")
+print("        correlation_results[var] = {'Correlação de Spearman': corr, 'Valor-P': p_value}")
+print("    else:")
+print("        correlation_results[var] = {'Correlação de Spearman': 'N/A', 'Valor-P': 'N/A - Variável ausente'}")
+print("")
+print("# Exibir resultados")
+print("corr_df = pd.DataFrame(correlation_results).transpose()")
+print("print(corr_df.to_markdown(floatfmt=\".3f\"))")
+print("```") # End of code block
