@@ -1,1 +1,1 @@
-# metodos-estatisticos
+# Apêndice da disciplia métodos estatísticos
