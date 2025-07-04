@@ -1,0 +1,9 @@
+def calcular_n(N, z=1.96, p=0.5, e=0.1):
+    num = N * (z**2) * p * (1 - p)
+    den = (e**2) * (N - 1) + (z**2) * p * (1 - p)
+    return round(num / den)
+
+# Exemplo
+N = 757  # população
+n_necessario = calcular_n(N, z=1.96, p=0.5, e=0.1)
+print(f'Tamanho mínimo da amostra: {n_necessario}')
