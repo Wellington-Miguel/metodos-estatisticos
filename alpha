@@ -1,0 +1,14 @@
+import pandas as pd
+import pingouin as pg
+
+# Exemplo de dados: 4 itens de um questionário
+dados = pd.DataFrame({
+    'item1': [3, 2, 4, 5, 4],
+    'item2': [4, 3, 4, 4, 5],
+    'item3': [3, 2, 3, 4, 4],
+    'item4': [5, 4, 5, 5, 5]
+})
+
+# Cálculo do Alfa de Cronbach
+alfa = pg.cronbach_alpha(data=dados)
+print(f'Alfa de Cronbach: {alfa[0]:.3f}')
