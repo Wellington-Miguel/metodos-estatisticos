@@ -1,0 +1,19 @@
+import pandas as pd
+
+# Carregar os dados
+df = pd.read_excel("amostra.xlsx")
+
+# Renomear colunas para facilitar (ajuste se necessário)
+df.columns = ['acesso_mensal', 'clareza', 'confianca', 'alterou_senha']
+
+# Cálculos descritivos
+resumo = df.describe().T
+
+# Coeficiente de Variação (%)
+resumo['coef_var_%'] = (resumo['std'] / resumo['mean']) * 100
+
+# Assimetria e curtose
+resumo['assimetria'] = df.skew()
+resumo['curtose'] = df.kurtosis()
+
+print(resumo[['mean', '50%', 'std', 'min', 'max', 'coef_var_%', 'assimetria', 'curtose']])
