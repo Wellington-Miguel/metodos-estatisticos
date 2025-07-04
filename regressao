@@ -1,0 +1,16 @@
+from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
+
+# MODELO 1 – Frequência de uso
+X1 = df[['clareza', 'confianca']]
+y1 = df['acesso_mensal']
+X1_const = sm.add_constant(X1)
+modelo1 = sm.OLS(y1, X1_const).fit()
+print(modelo1.summary())
+
+# MODELO 2 – Alterações de senha
+X2 = df[['clareza', 'confianca']]
+y2 = df['alterou_senha']
+X2_const = sm.add_constant(X2)
+modelo2 = sm.OLS(y2, X2_const).fit()
+print(modelo2.summary())
